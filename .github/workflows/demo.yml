@@ -9,49 +9,87 @@ jobs:
     steps:
       - name: Get code
         uses: actions/checkout@v4
+
       - name: cache
         uses: actions/cache@v4
         with: 
           path: ~/.npm
           key: deps-node-modules-${{ hashFiles('**/package-lock.json') }}
+      
       - name: Install dependencies
         run: npm ci
+
       - name: Lint code
         run: npm run lint
+
       - name: Test code
         run: npm run test
   build:
     needs: test
     runs-on: ubuntu-latest
+    outputs:
+      RELEASE_VERSION: ${{ steps.vars.outputs.RELEASE_VERSION }}
+      BUILD_PATH: ${{ steps.setpath.outputs.build-path }}
     steps:
       - name: Get code
         uses: actions/checkout@v4
+
       - name: cache
         uses: actions/cache@v4
         with: 
           path: ~/.npm
           key: deps-node-modules-${{ hashFiles('**/package-lock.json') }}
+
       - name: Install dependencies
         run: npm ci
+
       - name: create text file
         run: |
          echo "I know it's not much,
          I have nothing fit for a king,
          except for a heart singing hallelujah" > song.txt
+
       - name: upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: song-lyrics
           path: song.txt
+
+      - name: write output
+        run: echo "RELEASE_VERSION=1.2.3" >> $GITHUB_OUTPUT
+        id: vars
+
+      - name: Show output
+        run: echo "The release version is ${{ steps.vars.outputs.RELEASE_VERSION }}"
+
+      - name: Set output
+        id: setpath
+        run: echo "build-path=dist" >> $GITHUB_OUTPUT
+
       - name: Build website
         run: npm run build
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    outputs:
+      FILE_CONTENT: ${{ steps.readfile.outputs.content }}
     steps:
       - name: download artifact
         uses: actions/download-artifact@v4
         with:
           name: song-lyrics
+          path: ./downloaded
+      
+      - name: Read file into output
+        id: readfile
+        run: echo "content=$(cat ./downloaded/song.txt)" >> $GITHUB_OUTPUT
+      
+      - name: Show file content
+        run: |
+          echo "The file content is: ${{ steps.readfile.outputs.content }}"
+
+      - name: print path
+        run: echo "The build path is ${{ needs.build.outputs.BUILD_PATH }}"
+
       - name: Deploy
         run: echo "Deploying..."
