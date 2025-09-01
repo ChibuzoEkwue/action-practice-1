@@ -82,11 +82,15 @@ jobs:
       
       - name: Read file into output
         id: readfile
-        run: echo "content=$(cat ./downloaded/song.txt)" >> $GITHUB_OUTPUT
+        run: |
+         echo "content<<EOF" >> $GITHUB_OUTPUT
+         cat ./downloaded/song.txt >> $GITHUB_OUTPUT
+         echo "EOF" >> $GITHUB_OUTPUT
       
       - name: Show file content
         run: |
-          echo "The file content is: ${{ steps.readfile.outputs.content }}"
+         echo "The file content is:"
+         echo "${{ steps.readfile.outputs.content }}"
 
       - name: print path
         run: echo "The build path is ${{ needs.build.outputs.BUILD_PATH }}"
