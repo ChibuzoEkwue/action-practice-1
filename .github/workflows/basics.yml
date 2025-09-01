@@ -1,0 +1,14 @@
+name: Basics
+on: push
+jobs:
+    job1:
+        runs-on: ubuntu-latest
+        steps:
+            - name: print
+              run: echo "Hello GitHub Actions"
+
+            - name: Print mutiple lines
+              run: |
+                echo "Line 1"
+                echo "Line 2"
+                echo "Line 3"
